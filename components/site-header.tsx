@@ -20,7 +20,7 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-6">
         <a href="#" className="flex items-center gap-2 font-serif text-xl font-semibold text-primary">
           <PawPrint className="size-5 text-accent" aria-hidden="true" />
-          PETSHOP
+          CEKUWA
         </a>
 
         <nav aria-label="Ana menü" className="hidden md:block">
