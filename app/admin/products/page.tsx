@@ -39,6 +39,101 @@ async function getAdminToken() {
   }
 }
 
+async function createUploadTicket(fileType: string) {
+  "use server"
+
+  const token = await getAdminToken()
+
+  if (!["image/jpeg", "image/png", "image/webp"].includes(fileType)) {
+    throw new Error("Desteklenmeyen fotoğraf türü")
+  }
+
+  if (!url || !key) {
+    throw new Error("Supabase ayarları eksik")
+  }
+
+  const extension =
+    fileType === "image/png" ? "png" :
+    fileType === "image/webp" ? "webp" : "jpg"
+
+  const path = `products/${crypto.randomUUID()}.${extension}`
+
+  const response = await fetch(
+    `${url}/storage/v1/object/upload/sign/product-images/${path}`,
+    {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: "{}",
+      cache: "no-store",
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error("Fotoğraf yükleme izni alınamadı")
+  }
+
+  const data = await response.json()
+
+  return {
+    
+uploadUrl: `${url}/storage/v1${data.url}`,
+    publicUrl: `${url}/storage/v1/object/public/product-images/${path}`,
+  }
+}
+
+async function saveProductImage(
+  productId: number,
+  imageUrl: string,
+  position: number
+) {
+  "use server"
+
+  const token = await getAdminToken()
+
+  if (!url || !key) {
+    throw new Error("Supabase bağlantısı eksik")
+  }
+
+  const prefix =
+    `${url}/storage/v1/object/public/product-images/`
+
+  if (
+    !Number.isSafeInteger(productId) ||
+    productId <= 0 ||
+    !imageUrl.startsWith(prefix) ||
+    !Number.isSafeInteger(position) ||
+    position < 0
+  ) {
+    throw new Error("Geçersiz görsel bilgisi")
+  }
+
+  const response = await fetch(
+    `${url}/rest/v1/product_images`,
+    {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        product_id: productId,
+        image_url: imageUrl,
+        position,
+      }),
+      cache: "no-store",
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error("Görsel ürüne bağlanamadı")
+  }
+}
+
 async function addProduct(formData: FormData) {
   "use server"
 
@@ -182,6 +277,22 @@ export default async function ProductsPage({
             placeholder="Kategori"
             className="w-full rounded-xl border p-3 text-black"
           />
+
+<div className="rounded-xl border p-4">
+  <label className="mb-2 block font-semibold">
+    Ürün Fotoğrafları
+  </label>
+  <input
+    type="file"
+    name="images"
+    accept="image/*"
+    multiple
+    className="w-full text-black"
+  />
+  <p className="mt-2 text-sm text-gray-500">
+    Birden fazla fotoğraf seçebilirsin.
+  </p>
+</div>
 
           <input
             name="image_url"
