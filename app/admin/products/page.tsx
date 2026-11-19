@@ -181,6 +181,46 @@ async function addProduct(formData: FormData) {
   redirect("/admin/products?success=1")
 }
 
+async function deleteProduct(formData: FormData) {
+  "use server"
+
+  const token = await getAdminToken()
+  const productId = Number(formData.get("productId"))
+
+  if (!Number.isSafeInteger(productId) || productId <= 0) {
+    redirect("/admin/products?error=invalid")
+  }
+
+  if (!url || !key) {
+    redirect("/admin/products?error=save")
+  }
+
+  const response = await fetch(
+    `${url}/rest/v1/products?id=eq.${productId}`,
+    {
+      method: "DELETE",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${token}`,
+        Prefer: "return=representation",
+      },
+      cache: "no-store",
+    }
+  )
+
+  if (!response.ok) {
+    redirect("/admin/products?error=save")
+  }
+
+  const deleted = await response.json()
+
+  if (!Array.isArray(deleted) || deleted.length !== 1) {
+    redirect("/admin/products?error=save")
+  }
+
+  redirect("/admin/products?deleted=1")
+}
+
 export default async function ProductsPage({
   searchParams,
 }: {
@@ -348,6 +388,35 @@ export default async function ProductsPage({
 <ProductImageUploader 
   productId={Number(product.id)} />
   
+
+<details className="mt-4">
+  <summary className="cursor-pointer text-red-600 font-semibold">
+    🗑️ Ürünü Sil
+  </summary>
+
+  <div className="mt-3 rounded-xl border border-red-200 p-4">
+    <p className="mb-3 text-sm text-red-700">
+      Bu ürünü kalıcı olarak silmek istediğine emin misin?
+    </p>
+
+    <form action={deleteProduct}>
+      <input
+        type="hidden"
+        name="productId"
+        value={product.id}
+      />
+      <button
+        type="submit"
+        className="rounded-xl bg-red-600 px-5 py-3 font-semibold text-white"
+      >
+        Evet, Ürünü Kalıcı Olarak Sil
+      </button>
+    </form>
+  </div>
+</details>
+  
+    
+
               </div>
             ))}
           </div>
