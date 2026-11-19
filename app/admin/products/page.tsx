@@ -1,4 +1,4 @@
-
+import { ProductImageUploader } from "@/components/product-image-uploader"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
@@ -343,7 +343,11 @@ export default async function ProductsPage({
                 </h3>
                 <p>{product.category || "Kategorisiz"}</p>
                 <p>Fiyat: {product.price} TL</p>
-                <p>Stok: {product.stock}</p>
+              
+<p>Stok: {product.stock}</p>
+<ProductImageUploader 
+  productId={Number(product.id)} />
+  
               </div>
             ))}
           </div>
